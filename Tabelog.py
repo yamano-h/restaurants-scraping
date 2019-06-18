@@ -134,7 +134,6 @@ class Tabelog:
         # <p class="rstinfo-table__address"><span><a href="/tokyo/" class="listlink">東京都</a></span><span><a href="/tokyo/C13103/rstLst/" class="listlink">港区</a><a href="/tokyo/C13103/C36141/rstLst/" class="listlink">赤坂</a>2-6-24</span> <span>1F</span></p>
         address_tag = soup.find('p', class_='rstinfo-table__address')
         address = address_tag.text
-        print('定休日：{}'.format(address), end='')
         
         # 緯度経度の取得
         url = 'http://www.geocoding.jp/api/'
@@ -148,7 +147,8 @@ class Tabelog:
             lon = ret.find('lng').string
             self.lat = lat
             self.lon = lon
-            time.sleep(10)
+            print('　緯度{}'.format(lat), end='')
+            print('　経度{}'.format(lon), end='')
 
         self.make_df()
         return
@@ -160,6 +160,3 @@ class Tabelog:
         self.df = self.df.append(se, self.columns) # データフレームに行を追加
         return
 
-tokyo_ramen_review = Tabelog(base_url="https://tabelog.com/rstLst/?utf8=%E2%9C%93&utf8=%E2%9C%93&pal=tokyo&LstPrf=A1308&hfc=0&commit=%E7%B5%9E%E3%82%8A%E8%BE%BC%E3%82%80&lid=&RdoCosTp=1&LstCos=0&LstCosT=3&search_date=2019%2F6%2F18%28%E7%81%AB%29&svd=20190618&svps=2&svt=1900&LstRev=0&commit=%E7%B5%9E%E3%82%8A%E8%BE%BC%E3%82%80&LstSitu=0&LstSmoking=0/",test_mode=True)
-#CSV保存
-tokyo_ramen_review.df.to_csv("tokyo_ramen_review.csv")
