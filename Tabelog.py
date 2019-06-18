@@ -20,11 +20,12 @@ class Tabelog:
         self.store_name = ''
         self.score = 0
         self.link = ''
-        self.price = 0
+        self.min_price = 0
+        self.max_price = 0
         self.close_day = ''
         self.lat = ''
         self.lon = ''
-        self.columns = ['store_id', 'store_name', 'score',  'link', 'price', 'close_day', 'lat', 'lon']
+        self.columns = ['store_id', 'store_name', 'score',  'link', 'min_price', 'max_price', 'close_day', 'lat', 'lon']
         self.df = pd.DataFrame(columns=self.columns)
         self.__regexcomp = re.compile(r'\n|\s') # \nは改行、\sは空白
 
@@ -119,7 +120,10 @@ class Tabelog:
         lunch_price_tag = soup.find('p', class_='rdheader-budget__icon--lunch')
         lunch_price = lunch_price_tag.a.string
         print('ランチ価格：{}'.format(lunch_price), end='')
-        self.price = lunch_price
+        lunch_price_list = re.split('[～￥]', lunch_price) # ['a', 'b', 'c', 'd', 'e']と出力される
+
+        self.min_price = int(lunch_price_list[1].replace(',',''))
+        self.max_price = int(lunch_price_list[3].replace(',',''))
 
         # 定休日の取得
         # <dd id="short-comment" class="rdheader-subinfo__closed-text">
@@ -128,7 +132,7 @@ class Tabelog:
         close_day_tag = soup.find('dd', class_='rdheader-subinfo__closed-text')
         close_day = close_day_tag.string
         print('定休日：{}'.format(close_day), end='')
-        self.close_day = close_day
+        self.close_day = close_day.replace(' ','')
 
         # 住所の取得
         # <p class="rstinfo-table__address"><span><a href="/tokyo/" class="listlink">東京都</a></span><span><a href="/tokyo/C13103/rstLst/" class="listlink">港区</a><a href="/tokyo/C13103/C36141/rstLst/" class="listlink">赤坂</a>2-6-24</span> <span>1F</span></p>
@@ -156,7 +160,7 @@ class Tabelog:
     def make_df(self):
         self.store_id = str(self.store_id_num).zfill(8) #0パディング
         # ['store_id', 'store_name', 'score', 'link', 'price', 'close_day', 'lat', 'lon']
-        se = pd.Series([self.store_id, self.store_name, self.score, self.link, self.price , self.close_day, self.lat , self.lon], self.columns) # 行を作成
+        se = pd.Series([self.store_id, self.store_name, self.score, self.link, self.min_price , self.max_price , self.close_day, self.lat , self.lon], self.columns) # 行を作成
         self.df = self.df.append(se, self.columns) # データフレームに行を追加
         return
 
