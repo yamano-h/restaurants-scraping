@@ -9,7 +9,7 @@ import time
 
 class Tabelog:
     """
-    食べログスクレイピングクラス
+    googleスクレピング
     test_mode=Trueで動作させると、最初のページの３店舗のデータのみを取得できる
     """
     def __init__(self, base_url, test_mode=False, begin_page=1, end_page=30):
