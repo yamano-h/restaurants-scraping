@@ -24,8 +24,8 @@ class Tabelog:
         self.max_price = 0
         self.close_day = ''
         self.lat = ''
-        self.lon = ''
-        self.columns = ['store_id', 'store_name', 'score',  'link', 'min_price', 'max_price', 'close_day', 'lat', 'lon']
+        self.lng = ''
+        self.columns = ['store_id', 'store_name', 'score',  'link', 'min_price', 'max_price', 'close_day', 'lat', 'lng']
         self.df = pd.DataFrame(columns=self.columns)
         self.__regexcomp = re.compile(r'\n|\s') # \nは改行、\sは空白
 
@@ -148,19 +148,19 @@ class Tabelog:
             raise ValueError(f"Invalid address submitted. {address}")
         else:
             lat = ret.find('lat').string
-            lon = ret.find('lng').string
+            lng = ret.find('lng').string
             self.lat = lat
-            self.lon = lon
+            self.lng = lng
             print('　緯度{}'.format(lat), end='')
-            print('　経度{}'.format(lon), end='')
+            print('　経度{}'.format(lng), end='')
 
         self.make_df()
         return
 
     def make_df(self):
         self.store_id = str(self.store_id_num).zfill(8) #0パディング
-        # ['store_id', 'store_name', 'score', 'link', 'price', 'close_day', 'lat', 'lon']
-        se = pd.Series([self.store_id, self.store_name, self.score, self.link, self.min_price , self.max_price , self.close_day, self.lat , self.lon], self.columns) # 行を作成
+        # ['store_id', 'store_name', 'score', 'link', 'price', 'close_day', 'lat', 'lng']
+        se = pd.Series([self.store_id, self.store_name, self.score, self.link, self.min_price , self.max_price , self.close_day, self.lat , self.lng], self.columns) # 行を作成
         self.df = self.df.append(se, self.columns) # データフレームに行を追加
         return
 

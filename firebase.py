@@ -13,17 +13,18 @@ docs = users_ref.get()
 
 
 def main(stores):
+            # ['store_id', 'store_name', 'score', 'link', 'price', 'close_day', 'lat', 'lon']
 
-    for item in stores.iterrows():
+    for index, item in stores.iterrows():
         doc_ref = db.collection(u'sources').document()
         doc_ref.set({
             u'store_name': item['store_name'],
-            u'score': item['score'],
-            u'link': item['link'],
+            u'scores': {u'tabelog': item['score']},
+            u'link':  {u'tabelog': item['link']},
             u'min_price': item['min_price'],
             u'max_price': item['max_price'],
             u'close_day': item['close_day'],
             u'lat': item['lat'],
-            u'lon': item['lon'],
+            u'lng': item['lng'],
         })
 
