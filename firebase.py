@@ -19,8 +19,14 @@ def main(stores):
         doc_ref = db.collection(u'sources').document()
         doc_ref.set({
             u'store_name': item['store_name'],
-            u'scores': {u'tabelog': item['score']},
-            u'link':  {u'tabelog': item['link']},
+            u'scores': {
+                u'tabelog': item['score_tabelog'],
+                u'retty': item['score_retty'],
+            },
+            u'link': {
+                u'tabelog': item['link_tabelog'],
+                u'retty': item['link_retty'],
+            },
             u'min_price': item['min_price'],
             u'max_price': item['max_price'],
             u'close_day': item['close_day'],

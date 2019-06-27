@@ -18,14 +18,16 @@ class Tabelog:
         self.store_id = ''
         self.store_id_num = 0
         self.store_name = ''
-        self.score = 0
-        self.link = ''
+        self.score_tabelog = 0
+        self.score_retty = 0
+        self.link_tabelog = ''
+        self.link_retty = ''
         self.min_price = 0
         self.max_price = 0
         self.close_day = ''
         self.lat = ''
         self.lng = ''
-        self.columns = ['store_id', 'store_name', 'score',  'link', 'min_price', 'max_price', 'close_day', 'lat', 'lng']
+        self.columns = ['store_id', 'store_name', 'score_tabelog', 'score_retty', 'link_tabelog', 'link_retty', 'min_price', 'max_price', 'close_day', 'lat', 'lng']
         self.df = pd.DataFrame(columns=self.columns)
         self.__regexcomp = re.compile(r'\n|\s') # \nは改行、\sは空白
 
@@ -79,8 +81,8 @@ class Tabelog:
         """
         start = time.time()
 
-        # 店舗URL保存
-        self.link = item_url
+        # 食べログ店舗URL保存
+        self.link_tabelog = item_url
 
         r = requests.get(item_url)
         if r.status_code != requests.codes.ok:
@@ -106,8 +108,7 @@ class Tabelog:
         #</b>
         rating_score_tag = soup.find('b', class_='c-rating__val')
         rating_score = rating_score_tag.span.string
-        print('  評価点数：{}点'.format(rating_score), end='')
-        self.score = float(rating_score)
+        self.score_tabelog = float(rating_score)
 
 
         # 価格帯の取得
@@ -122,8 +123,13 @@ class Tabelog:
         print('ランチ価格：{}'.format(lunch_price), end='')
         lunch_price_list = re.split('[～￥]', lunch_price) # ['a', 'b', 'c', 'd', 'e']と出力される
 
-        self.min_price = int(lunch_price_list[1].replace(',',''))
-        self.max_price = int(lunch_price_list[3].replace(',',''))
+  
+        if (lunch_price_list[1] == ''):
+            self.min_price = 0
+            self.max_price = int(lunch_price_list[2].replace(',',''))
+        else:
+            self.min_price = int(lunch_price_list[1].replace(',',''))
+            self.max_price = int(lunch_price_list[3].replace(',',''))
 
         # 定休日の取得
         # <dd id="short-comment" class="rdheader-subinfo__closed-text">
@@ -154,13 +160,38 @@ class Tabelog:
             print('　緯度{}'.format(lat), end='')
             print('　経度{}'.format(lng), end='')
 
+        # Rettyの評価取得
+        r = requests.get('https://retty.me/restaurant-search/search-result/?free_word_category=' + self.store_name)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        # <a href="https://retty.me/area/PRE13/ARE18/SUB1801/100001429789/" target="_blank" class="image-viewer__link"><ul mode="in-out" class="image-viewer__view"><li><img src="https://ximg.retty.me/crop/s220x220/-/retty/img_repo/l/01/17856959.jpg" alt=""></li><li style="display: none;"><img src="https://ximg.retty.me/crop/s220x220/-/retty/img_repo/l/01/18363840.jpg" alt=""></li><li style="display: none;"><img src="https://ximg.retty.me/crop/s220x220/-/retty/img_repo/l/01/17856962.jpg" alt=""></li></ul> <!----></a>
+        link = soup.find('section', class_='columns__item--restaurants')
+        # popularity = popularity_tag.svg
+
+        try:
+            restaurants = link.contents[3].attrs[':restaurants']
+            tmpLink = restaurants.split('\'url\':\'')[1]
+            tmpLink2 = tmpLink.split('\',\'lng\'')[0]
+            link = tmpLink2.replace('\\', '')
+            # rettyリンク格納
+            self.link_retty = link
+            r = requests.get(link)
+            soup = BeautifulSoup(r.content, 'html.parser')
+            # <div :level="3" class="restaurant-summary__popularity-label js-popularity-label" is="popularity-label" name="和食"></div>
+            popularity_tag = soup.find('div', class_='restaurant-summary__popularity-label')
+            popularity = popularity_tag.attrs[':level']
+            # retty上にデータがあれば格納
+            self.score_retty = float(popularity)
+        except:
+            # retty上にデータがなければ0を格納
+            self.score_retty = 0
+
         self.make_df()
         return
 
     def make_df(self):
         self.store_id = str(self.store_id_num).zfill(8) #0パディング
         # ['store_id', 'store_name', 'score', 'link', 'price', 'close_day', 'lat', 'lng']
-        se = pd.Series([self.store_id, self.store_name, self.score, self.link, self.min_price , self.max_price , self.close_day, self.lat , self.lng], self.columns) # 行を作成
+        se = pd.Series([self.store_id, self.store_name, self.score_tabelog, self.score_retty, self.link_tabelog, self.link_retty, self.min_price , self.max_price , self.close_day, self.lat , self.lng], self.columns) # 行を作成
         self.df = self.df.append(se, self.columns) # データフレームに行を追加
         return
 
