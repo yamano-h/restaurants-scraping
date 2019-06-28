@@ -32,5 +32,6 @@ def main(stores):
             u'close_day': item['close_day'],
             u'lat': item['lat'],
             u'lng': item['lng'],
+            u'genre_list': item['genre_list'],
         })
 

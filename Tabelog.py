@@ -27,7 +27,8 @@ class Tabelog:
         self.close_day = ''
         self.lat = ''
         self.lng = ''
-        self.columns = ['store_id', 'store_name', 'score_tabelog', 'score_retty', 'link_tabelog', 'link_retty', 'min_price', 'max_price', 'close_day', 'lat', 'lng']
+        self.genre_list = ''
+        self.columns = ['store_id', 'store_name', 'score_tabelog', 'score_retty', 'link_tabelog', 'link_retty', 'min_price', 'max_price', 'close_day', 'lat', 'lng', 'genre_list']
         self.df = pd.DataFrame(columns=self.columns)
         self.__regexcomp = re.compile(r'\n|\s') # \nは改行、\sは空白
 
@@ -160,6 +161,61 @@ class Tabelog:
             print('　緯度{}'.format(lat), end='')
             print('　経度{}'.format(lng), end='')
 
+        # ジャンルの取得
+        # <dl class="rdheader-subinfo__item">
+        #     <dt class="rdheader-subinfo__item-title">ジャンル：</dt>
+        #     <dd class="rdheader-subinfo__item-text">        
+        #         <div class="linktree" onmouseover="this.className='linktree is-selected';" onmouseout="this.className='linktree';">
+        #         <div class="linktree__parent">
+        #             <a href="https://tabelog.com/rstLst/cake/" class="linktree__parent-target">
+        #             <span class="linktree__parent-target-text">ケーキ</span>
+        #             </a>
+        #         </div>
+        #         <div class="linktree__childbox">
+        #             <div class="c-balloon c-balloon--top linktree__childbaloon">
+        #             <ul class="linktree__childlist"><li class="linktree__childlist-item"><a href="https://tabelog.com/tokyo/A1318/A131811/rstLst/cake/">ケーキ×代々木上原・東北沢</a></li><li class="linktree__childlist-item"><a href="https://tabelog.com/tokyo/A1318/rstLst/cake/">ケーキ×京王・小田急沿線</a></li><li class="linktree__childlist-item"><a href="https://tabelog.com/tokyo/rstLst/cake/">ケーキ×東京</a></li>
+        #             </ul>
+        #             </div>
+        #         </div>
+        #         </div>
+        #         <div class="linktree" onmouseover="this.className='linktree is-selected';" onmouseout="this.className='linktree';">
+        #         <div class="linktree__parent">
+        #             <a href="https://tabelog.com/rstLst/CC010101/" class="linktree__parent-target">
+        #             <span class="linktree__parent-target-text">カフェ</span>
+        #             </a>
+        #         </div>
+        #         <div class="linktree__childbox">
+        #             <div class="c-balloon c-balloon--top linktree__childbaloon">
+        #             <ul class="linktree__childlist"><li class="linktree__childlist-item"><a href="https://tabelog.com/tokyo/A1318/A131811/rstLst/CC010101/">カフェ×代々木上原・東北沢</a></li><li class="linktree__childlist-item"><a href="https://tabelog.com/tokyo/A1318/rstLst/CC010101/">カフェ×京王・小田急沿線</a></li><li class="linktree__childlist-item"><a href="https://tabelog.com/tokyo/rstLst/CC010101/">カフェ×東京</a></li>
+        #             </ul>
+        #             </div>
+        #         </div>
+        #         </div>
+        #         <div class="linktree" onmouseover="this.className='linktree is-selected';" onmouseout="this.className='linktree';">
+        #         <div class="linktree__parent">
+        #             <a href="https://tabelog.com/rstLst/SC0101/" class="linktree__parent-target">
+        #             <span class="linktree__parent-target-text">パン</span>
+        #             </a>
+        #         </div>
+        #         <div class="linktree__childbox">
+        #             <div class="c-balloon c-balloon--top linktree__childbaloon">
+        #             <ul class="linktree__childlist"><li class="linktree__childlist-item"><a href="https://tabelog.com/tokyo/A1318/A131811/rstLst/SC0101/">パン×代々木上原・東北沢</a></li><li class="linktree__childlist-item"><a href="https://tabelog.com/tokyo/A1318/rstLst/SC0101/">パン×京王・小田急沿線</a></li><li class="linktree__childlist-item"><a href="https://tabelog.com/tokyo/rstLst/SC0101/">パン×東京</a></li>
+        #             </ul>
+        #             </div>
+        #         </div>
+        #         </div>
+        #     </dd>
+        # </dl>
+        
+        genre_tagArea = soup.findAll('dl', class_='rdheader-subinfo__item')[1]
+        genre_tagList = genre_tagArea.findAll('span', class_='linktree__parent-target-text')
+        genre_list = []
+        for genre_tag in genre_tagList:
+            genre = genre_tag.string
+            genre_list.append(genre)
+        print('ジャンル：{}'.format(genre_list), end='')
+        self.genre_list = genre_list
+
         # Rettyの評価取得
         r = requests.get('https://retty.me/restaurant-search/search-result/?free_word_category=' + self.store_name)
         soup = BeautifulSoup(r.content, 'html.parser')
@@ -190,8 +246,8 @@ class Tabelog:
 
     def make_df(self):
         self.store_id = str(self.store_id_num).zfill(8) #0パディング
-        # ['store_id', 'store_name', 'score', 'link', 'price', 'close_day', 'lat', 'lng']
-        se = pd.Series([self.store_id, self.store_name, self.score_tabelog, self.score_retty, self.link_tabelog, self.link_retty, self.min_price , self.max_price , self.close_day, self.lat , self.lng], self.columns) # 行を作成
+        # ['store_id', 'store_name', 'score', 'link', 'price', 'close_day', 'lat', 'lng', 'genre_list]
+        se = pd.Series([self.store_id, self.store_name, self.score_tabelog, self.score_retty, self.link_tabelog, self.link_retty, self.min_price , self.max_price , self.close_day, self.lat , self.lng, self.genre_list], self.columns) # 行を作成
         self.df = self.df.append(se, self.columns) # データフレームに行を追加
         return
 
