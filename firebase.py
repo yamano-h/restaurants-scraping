@@ -17,6 +17,11 @@ def main(stores):
 
     for index, item in stores.iterrows():
         doc_ref = db.collection(u'sources').document()
+        # store_nameが一致するものがあったら既存のものに上書き
+        docs = db.collection(u'sources').where(u'store_name', u'==', item['store_name']).get()
+        for doc in docs:
+            doc_ref = db.collection(u'sources').document(doc.id)
+            
         doc_ref.set({
             u'store_name': item['store_name'],
             u'scores': {

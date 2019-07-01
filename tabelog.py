@@ -12,7 +12,7 @@ class Tabelog:
     食べログスクレイピングクラス
     test_mode=Trueで動作させると、最初のページの３店舗のデータのみを取得できる
     """
-    def __init__(self, base_url, test_mode=False, begin_page=1, end_page=30):
+    def __init__(self, base_url, test_mode=False, begin_page=31, end_page=60):
 
         # 変数宣言
         self.store_id = ''
@@ -35,11 +35,14 @@ class Tabelog:
         page_num = begin_page # 店舗一覧ページ番号
 
         if test_mode:
-            list_url = base_url + str(page_num) +  '/?Srt=D&SrtT=rt&sort_mode=1' #食べログの点数ランキングでソートする際に必要な処理
+            list_url = base_url + str(page_num) +  '/?Srt=D&SrtT=rt&sort_mode=1&LstSmoking=0&svd=20190629&svt=1900&svps=2&LstCosT=3&RdoCosTp=1/' #食べログの点数ランキングでソートする際に必要な処理
+            print('URL:', list_url)
             self.scrape_list(list_url, mode=test_mode)
         else:
             while True:
-                list_url = base_url + str(page_num) +  '/?Srt=D&SrtT=rt&sort_mode=1' #食べログの点数ランキングでソートする際に必要な処理
+                print('ページ番号:', page_num)
+                list_url = base_url + str(page_num) +  '/?Srt=D&SrtT=rt&sort_mode=1&LstSmoking=0&svd=20190629&svt=1900&svps=2&LstCosT=3&RdoCosTp=1/' #食べログの点数ランキングでソートする際に必要な処理
+                print('URL:', list_url)
                 if self.scrape_list(list_url, mode=test_mode) != True:
                     break
 
@@ -137,29 +140,27 @@ class Tabelog:
         #     不定休                  
         # </dd>
         close_day_tag = soup.find('dd', class_='rdheader-subinfo__closed-text')
-        close_day = close_day_tag.string
-        print('定休日：{}'.format(close_day), end='')
-        self.close_day = close_day.replace(' ','')
-
-        # 住所の取得
-        # <p class="rstinfo-table__address"><span><a href="/tokyo/" class="listlink">東京都</a></span><span><a href="/tokyo/C13103/rstLst/" class="listlink">港区</a><a href="/tokyo/C13103/C36141/rstLst/" class="listlink">赤坂</a>2-6-24</span> <span>1F</span></p>
-        address_tag = soup.find('p', class_='rstinfo-table__address')
-        address = address_tag.text
-        
-        # 緯度経度の取得
-        url = 'http://www.geocoding.jp/api/'
-        payload = {'q': address}
-        r = requests.get(url, params=payload)
-        ret = BeautifulSoup(r.content,'lxml')
-        if ret.find('error'):
-            raise ValueError(f"Invalid address submitted. {address}")
+        if close_day_tag is None:
+            self.close_day = ''
         else:
-            lat = float(ret.find('lat').string)
-            lng = float(ret.find('lng').string)
-            self.lat = lat
-            self.lng = lng
-            print('　緯度{}'.format(lat), end='')
-            print('　経度{}'.format(lng), end='')
+            close_day = close_day_tag.string
+            print('定休日：{}'.format(close_day), end='')
+            self.close_day = close_day.replace(' ','')
+
+        # 緯度経度の取得
+        # <img alt="京の里 - 地図" class="js-map-lazyload lazy-loaded" data-original="https://maps.googleapis.com/maps/api/staticmap?client=gme-kakakucominc&amp;channel=tabelog.com&amp;sensor=false&amp;hl=ja&amp;center=35.66898377973923,139.75280405726483&amp;markers=color:red%7C35.66898377973923,139.75280405726483&amp;zoom=15&amp;size=490x145&amp;signature=VdYioglVBbGrKuAyD4zYgG0S6WA=" src="https://maps.googleapis.com/maps/api/staticmap?client=gme-kakakucominc&amp;channel=tabelog.com&amp;sensor=false&amp;hl=ja&amp;center=35.66898377973923,139.75280405726483&amp;markers=color:red%7C35.66898377973923,139.75280405726483&amp;zoom=15&amp;size=490x145&amp;signature=VdYioglVBbGrKuAyD4zYgG0S6WA=">
+        link_tag = soup.find('img', class_='js-map-lazyload')
+        link = link_tag.attrs['data-original']
+        lat_lng_tmp = link.split('center=')[1]
+        lat_lng_tmp2 = lat_lng_tmp.split('&markers')[0]
+        lat_lng = lat_lng_tmp2.split(',')
+        
+        lat = float(lat_lng[0])
+        lng = float(lat_lng[1])
+        self.lat = lat
+        self.lng = lng
+        print('　緯度{}'.format(lat), end='')
+        print('　経度{}'.format(lng), end='')
 
         # ジャンルの取得
         # <dl class="rdheader-subinfo__item">
