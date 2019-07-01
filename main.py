@@ -3,8 +3,7 @@
 
 import tabelog
 import firebase
-from pygeocoder import Geocoder
-import googlemaps
+
 from bs4 import BeautifulSoup
 import requests
 
